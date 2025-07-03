@@ -33,47 +33,33 @@ class ZoomService
         return $redirectUrl;
     }
 
-
-    // public function getAccessToken($code)
-    // {
-    //     $client = new Client();
-    //     $response = $client->post('https://zoom.us/oauth/token', [
-    //         'form_params' => [
-    //             'client_id' => $this->clientId,
-    //             'client_secret' => $this->clientSecret,
-    //             'code' => $code,
-    //             'grant_type' => 'authorization_code',
-    //             'redirect_uri' => $this->redirectUri
-    //         ]
-    //     ]);
-
-    //     $data = json_decode($response->getBody(), true);
-    //     return $data['access_token'];
-    // }
     public function getAccessToken($code)
     {
         $client = new Client();
 
         try {
             $response = $client->post('https://zoom.us/oauth/token', [
+                'auth' => [$this->clientId, $this->clientSecret], // ✅ Basic Auth
                 'form_params' => [
-                    'client_id' => $this->clientId,
-                    'client_secret' => $this->clientSecret,
-                    'code' => $code,
                     'grant_type' => 'authorization_code',
+                    'code' => $code,
                     'redirect_uri' => $this->redirectUri
-                ]
+                ],
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
             ]);
 
             $data = json_decode($response->getBody(), true);
             \Log::info('Zoom Access Token Retrieved: ' . json_encode($data));
+            return $data['access_token'] ?? null;
 
-            return $data['access_token'];
         } catch (\Exception $e) {
             \Log::error('Error retrieving Zoom Access Token: ' . $e->getMessage());
             return null;
         }
     }
+
 
 
     public function createMeeting($accessToken, $data)
